@@ -81,10 +81,12 @@ void forward_kernel(const float* Q, const float* K, const float* V, const int N,
     }
 }
 
+
+
 torch::Tensor forward(torch::Tensor Q, torch::Tensor K, torch::Tensor V) {
     // TODO: determine Bc, Br dynamically
     const int Bc = 32; const int Br = 32;
-
+    // q = torch.randn(batch_size, n_head, seq_len, head_embd).cuda()
     const int B = Q.size(0); const int nh = Q.size(1);
     const int N = Q.size(2); const int d = Q.size(3);
 
@@ -97,7 +99,6 @@ torch::Tensor forward(torch::Tensor Q, torch::Tensor K, torch::Tensor V) {
     auto m = torch::full({B, nh, N}, -INFINITY);
     torch::Device device(torch::kCUDA);
     l = l.to(device); m = m.to(device);
-
     // Calculate SRAM size needed per block
     const int sram_size = (3 * Bc * d * sizeof(float)) + (Bc * Br * sizeof(float));
     int max_sram_size;
@@ -112,5 +113,6 @@ torch::Tensor forward(torch::Tensor Q, torch::Tensor K, torch::Tensor V) {
         N, d, Tc, Tr, Bc, Br, softmax_scale,
         l.data_ptr<float>(), m.data_ptr<float>(), O.data_ptr<float>()
     );
+
     return O;
 }
